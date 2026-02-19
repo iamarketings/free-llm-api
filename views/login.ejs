@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-gray-50">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion — Free LLM API</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { brand: { 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' } }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body
+    class="h-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 font-sans">
+    <div class="w-full max-w-sm mx-4">
+
+        <!-- Card -->
+        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+
+            <!-- Header -->
+            <div class="bg-slate-900 px-8 py-8 text-center">
+                <div
+                    class="h-14 w-14 bg-brand-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brand-600/40">
+                    <i class="fas fa-layer-group text-white text-xl"></i>
+                </div>
+                <h1 class="text-white font-bold text-xl">Free LLM API</h1>
+                <p class="text-slate-400 text-sm mt-1">Administration — Connexion requise</p>
+            </div>
+
+            <!-- Form -->
+            <div class="px-8 py-8">
+
+                <% if (error) { %>
+                    <div
+                        class="mb-5 flex items-center gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                        <i class="fas fa-triangle-exclamation shrink-0"></i>
+                        <span>Mot de passe incorrect. Réessayez.</span>
+                    </div>
+                    <% } %>
+
+                        <form action="/login" method="POST" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                    <i class="fas fa-lock text-gray-400 mr-1.5"></i>Mot de passe
+                                </label>
+                                <input type="password" name="password" autofocus required
+                                    placeholder="Votre mot de passe..."
+                                    class="w-full h-11 px-4 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition shadow-sm">
+                            </div>
+                            <button type="submit"
+                                class="w-full h-11 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-xl transition shadow-md shadow-brand-600/30 flex items-center justify-center gap-2">
+                                <i class="fas fa-right-to-bracket"></i>
+                                Se connecter
+                            </button>
+                        </form>
+
+                        <p class="text-center text-xs text-gray-400 mt-6">
+                            <i class="fas fa-shield-halved mr-1"></i>
+                            Accès restreint — Dashboard Admin
+                        </p>
+            </div>
+        </div>
+
+        <!-- Note de version -->
+        <p class="text-center text-xs text-slate-500 mt-4">Free LLM API v2.4 Enterprise</p>
+    </div>
+</body>
+
+</html>

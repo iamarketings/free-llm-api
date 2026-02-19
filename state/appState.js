@@ -19,6 +19,8 @@ function loadConfig() {
         fixed_model: null,
         system_prompt: "",
         usage_stats: { success: 0, errors: 0 },
+        api_key: "",            // Clé OpenRouter — vide = modèles publics gratuits uniquement
+        dashboard_password: "", // Mot de passe du dashboard — vide = accès libre
     };
 
     if (fs.existsSync(CONFIG_PATH)) {
@@ -39,7 +41,9 @@ function saveConfig() {
         fixed_model: state.fixed_model,
         system_prompt: state.system_prompt,
         usage_stats: state.usage_stats,
-        config_overrides: state.config_overrides, // Persist overrides
+        config_overrides: state.config_overrides,
+        api_key: state.api_key || "",
+        dashboard_password: state.dashboard_password || "",
     };
     try {
         fs.writeFileSync(CONFIG_PATH, JSON.stringify(toSave, null, 2));
@@ -53,19 +57,21 @@ const persisted = loadConfig();
 
 const state = {
     // --- Persisté dans config.json ---
-    mode: persisted.mode,                // "auto" | "manual"
-    fixed_model: persisted.fixed_model,  // ID du modèle fixé ou null
-    system_prompt: persisted.system_prompt, // Prompt système personnalisé
-    usage_stats: persisted.usage_stats, // { success, errors }
-    config_overrides: persisted.config_overrides || {}, // { refresh_interval, timeout, etc. }
+    mode: persisted.mode,
+    fixed_model: persisted.fixed_model,
+    system_prompt: persisted.system_prompt,
+    usage_stats: persisted.usage_stats,
+    config_overrides: persisted.config_overrides || {},
+    api_key: persisted.api_key || "",               // Clé API OpenRouter (optionnelle)
+    dashboard_password: persisted.dashboard_password || "", // Mot de passe dashboard ("" = libre)
 
     // --- En mémoire uniquement ---
-    active_models: [],  // Liste des modèles gratuits disponibles
-    history: [],        // Historique des dernières requêtes
-    is_syncing: false,  // Scan de nettoyage en cours ?
-    last_sync: null,    // Heure de la dernière synchro réussie (string)
-    modelRecommendations: [], // Recommandations basées sur les tests
-    system_logs: [],    // Logs pour l'admin panel
+    active_models: [],
+    history: [],
+    is_syncing: false,
+    last_sync: null,
+    modelRecommendations: [],
+    system_logs: [],
 };
 
 module.exports = { state, saveConfig };

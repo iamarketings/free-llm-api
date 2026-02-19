@@ -23,6 +23,8 @@ function showDashboard(req, res) {
         recommendations: state.modelRecommendations || [],
         logs: state.system_logs || [],
         config_overrides: state.config_overrides || {},
+        api_key: state.api_key || "",
+        dashboard_password: state.dashboard_password || "",
     });
 }
 

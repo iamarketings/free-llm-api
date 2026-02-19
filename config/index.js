@@ -8,7 +8,7 @@ const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
 const config = {
-    // Clé API OpenRouter (obligatoire)
+    // Clé API OpenRouter (optionnelle — OpenRouter est accessible sans clé pour les modèles gratuits)
     OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || "",
 
     // URLs de l'API OpenRouter
@@ -28,10 +28,9 @@ const config = {
     HISTORY_MAX: 50,
 };
 
-// Vérification critique au démarrage
+// Clé optionnelle — on informe mais on ne bloque pas le démarrage
 if (!config.OPENROUTER_API_KEY) {
-    console.error("❌ OPENROUTER_API_KEY manquante dans le fichier .env !");
-    process.exit(1);
+    console.warn("⚠️  Aucune OPENROUTER_API_KEY — le proxy fonctionnera avec les modèles publics gratuits.");
 }
 
 module.exports = config;

@@ -18,11 +18,16 @@ const path = require("path");
 // Chemin du fichier de mémoire/classification
 const MEMORY_PATH = path.join(__dirname, "..", "modelMemory.json");
 
-// Headers d'authentification communs à toutes les requêtes
-const authHeaders = () => ({
-    Authorization: `Bearer ${config.OPENROUTER_API_KEY}`,
-    "Content-Type": "application/json",
-});
+// Headers d'authentification communs — clé dynamique (UI > .env > vide)
+const authHeaders = () => {
+    const key = state.api_key || config.OPENROUTER_API_KEY || "";
+    return {
+        ...(key ? { Authorization: `Bearer ${key}` } : {}),
+        "Content-Type": "application/json",
+        "HTTP-Referer": "http://localhost:8000",
+        "X-Title": "Free LLM API Proxy",
+    };
+};
 
 /**
  * Charge la mémoire des modèles (scores, classifications, etc.)

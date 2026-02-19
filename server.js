@@ -2,20 +2,51 @@
  * server.js
  * ─────────────────────────────────────────────────────────
  * Point d'entrée de l'application.
- * Configure Express, démarre le serveur et lance le modèle.
+ * Configure Express, le middleware d'auth, et démarre le serveur.
  */
 const express = require("express");
 const path = require("path");
 const config = require("./config/index");
 const routes = require("./routes");
 const { startAutoRefresh } = require("./models/modelManager");
-const { saveConfig } = require("./state/appState");
+const { saveConfig, state } = require("./state/appState");
 
 const app = express();
 
 // ── Middlewares ────────────────────────────────────────
-app.use(express.json());          // Parse les corps JSON
-app.use(express.urlencoded({ extended: true })); // Parse les formulaires HTML
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Cookie parser simple (sans dépendance)
+app.use((req, res, next) => {
+    const cookies = {};
+    const raw = req.headers.cookie || "";
+    raw.split(";").forEach(part => {
+        const [k, ...v] = part.trim().split("=");
+        if (k) cookies[k.trim()] = decodeURIComponent(v.join("="));
+    });
+    req.cookies = cookies;
+    next();
+});
+
+// ── Middleware d'authentification Dashboard ─────────────
+// Les routes API (/v1/*, /health) ne sont PAS protégées
+app.use((req, res, next) => {
+    const pwd = state.dashboard_password;
+
+    // Pas de mot de passe défini → accès libre
+    if (!pwd) return next();
+
+    // Routes publiques : login, logout, API, health
+    const publicPaths = ["/login", "/logout", "/health", "/v1/"];
+    if (publicPaths.some(p => req.path.startsWith(p))) return next();
+
+    // Cookie valide ?
+    if (req.cookies.dfp_auth === pwd) return next();
+
+    // Sinon → page de login
+    return res.redirect("/login");
+});
 
 // ── Moteur de vues EJS ─────────────────────────────────
 app.set("view engine", "ejs");
@@ -31,9 +62,8 @@ app.use((req, res) => {
 
 // ── Démarrage ──────────────────────────────────────────
 async function start() {
-    console.log("⚡ Dynamic Free Proxy — Node.js v2.0");
+    console.log("⚡ Dynamic Free Proxy — Node.js v2.4");
 
-    // Lance le chargement des modèles (immédiat + nettoyage en fond)
     await startAutoRefresh();
 
     app.listen(config.PORT, () => {
@@ -41,9 +71,11 @@ async function start() {
         console.log(`   Dashboard  → http://localhost:${config.PORT}/`);
         console.log(`   API Chat   → POST http://localhost:${config.PORT}/v1/chat/completions`);
         console.log(`   Modèles    → GET  http://localhost:${config.PORT}/v1/models`);
+        if (state.dashboard_password) {
+            console.log(`   🔒 Dashboard protégé par mot de passe`);
+        }
     });
 
-    // Sauvegarde propre à l'arrêt du processus
     process.on("SIGINT", () => { saveConfig(); process.exit(0); });
     process.on("SIGTERM", () => { saveConfig(); process.exit(0); });
 }

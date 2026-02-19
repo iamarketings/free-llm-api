@@ -7,51 +7,69 @@
  *  - Mode "auto"   → essaie les modèles un par un jusqu'au succès
  *  - Mode "manual" → utilise uniquement le modèle fixé
  *
- * En cas d'échec d'un modèle (timeout, 4xx, 5xx), il est retiré
- * immédiatement de la liste active pour ne plus être retesté.
+ * Un modèle n'est retiré que s'il génère une erreur réseau
+ * (timeout, connexion refusée) — jamais sur 401/403/429.
  */
 const axios = require("axios");
-const config = require("../config");
+const config = require("../config/index");
 const { state, saveConfig } = require("../state/appState");
+
+/**
+ * Retourne la clé API à utiliser : celle configurée dans l'UI en priorité,
+ * puis celle du fichier .env, sinon chaîne vide (requête publique).
+ */
+function getApiKey() {
+    return state.api_key || config.OPENROUTER_API_KEY || "";
+}
+
+/**
+ * Headers d'authentification, toujours à jour (clé dynamique).
+ */
+function authHeaders() {
+    const key = getApiKey();
+    return {
+        ...(key ? { Authorization: `Bearer ${key}` } : {}),
+        "Content-Type": "application/json",
+        "HTTP-Referer": "http://localhost:8000",
+        "X-Title": "Free LLM API Proxy",
+    };
+}
 
 /**
  * Ajoute le prompt système aux messages si configuré.
  */
 function injectSystemPrompt(messages) {
-    // Si pas de prompt système configuré, retourne tel quel
     if (!state.system_prompt || state.system_prompt.trim() === "") {
         return messages;
     }
-
-    // Vérifie si un message system existe déjà
     const hasSystem = messages.some(m => m.role === "system");
-
     if (hasSystem) {
-        // Ajoute notre prompt avant le premier message system existant
-        return [
-            { role: "system", content: state.system_prompt },
-            ...messages
-        ];
-    } else {
-        // Ajoute le prompt system en premier
-        return [
-            { role: "system", content: state.system_prompt },
-            ...messages
-        ];
+        return [{ role: "system", content: state.system_prompt }, ...messages];
     }
+    return [{ role: "system", content: state.system_prompt }, ...messages];
 }
 
-// Headers d'authentification
-const authHeaders = () => ({
-    Authorization: `Bearer ${config.OPENROUTER_API_KEY}`,
-    "Content-Type": "application/json",
-});
+/**
+ * Détermine si une erreur doit provoquer le retrait du modèle.
+ * On retire UNIQUEMENT sur erreur réseau, pas sur 401/403/429.
+ */
+function shouldRemoveModel(err) {
+    if (err.code === "ECONNABORTED") return true;          // timeout
+    if (err.code === "ECONNREFUSED") return true;          // serveur mort
+    if (err.message && err.message.toLowerCase().includes("timeout")) return true;
+    if (err.response) {
+        const status = err.response.status;
+        // 401/403 = problème de clé → modèle OK, ne pas retirer
+        // 429 = rate-limit → modèle OK, ne pas retirer
+        // 5xx = erreur serveur temporaire → retirer prudemment
+        if (status === 401 || status === 403 || status === 429) return false;
+        if (status >= 500) return true;
+    }
+    return false;
+}
 
 /**
  * Gère une requête de chat et la route vers OpenRouter.
- * Supporte les formats :
- *  - { messages: [...] }       → format OpenAI standard
- *  - { prompt: "..." }         → format simplifié
  */
 async function handleChat(req, res) {
     // --- Parsing du corps ---
@@ -66,13 +84,13 @@ async function handleChat(req, res) {
     // --- Injection du prompt système ---
     messages = injectSystemPrompt(messages);
 
-    // --- Paramètres optionnels à transmettre à OpenRouter ---
+    // --- Paramètres optionnels ---
     const optional = {};
     for (const key of ["temperature", "max_tokens", "top_p", "stream", "stop"]) {
         if (req.body[key] !== undefined) optional[key] = req.body[key];
     }
 
-    // --- Détermination des modèles cibles ---
+    // --- Modèles cibles ---
     const targets =
         state.mode === "manual" && state.fixed_model
             ? [state.fixed_model]
@@ -84,17 +102,18 @@ async function handleChat(req, res) {
         });
     }
 
-    // --- Tentatives successives (fallback automatique) ---
+    const timeout = (state.config_overrides?.request_timeout || 30) * 1000;
+
+    // --- Tentatives successives (fallback) ---
     for (const modelId of targets) {
         try {
             const response = await axios.post(
                 config.OPENROUTER_CHAT_URL,
                 { model: modelId, messages, ...optional },
-                { headers: authHeaders(), timeout: 60_000 }
+                { headers: authHeaders(), timeout }
             );
 
             if (response.status === 200) {
-                // Succès : mise à jour des stats et de l'historique
                 state.usage_stats.success++;
                 state.history.unshift({
                     time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
@@ -102,25 +121,30 @@ async function handleChat(req, res) {
                     prompt: String(messages.at(-1)?.content ?? "").slice(0, 40),
                     status: "OK",
                 });
-                // On ne garde que les HISTORY_MAX dernières entrées
                 state.history = state.history.slice(0, config.HISTORY_MAX);
                 saveConfig();
-
                 return res.json(response.data);
             }
 
-            // Modèle en erreur → retrait de la liste active
-            console.warn(`❌ ${modelId} → HTTP ${response.status}, retiré.`);
-            state.active_models = state.active_models.filter((m) => m.id !== modelId);
+            // Mauvaise réponse non-exception (rare avec Axios)
+            console.warn(`⚠️  ${modelId} → HTTP ${response.status}`);
 
         } catch (err) {
-            if (err.code === "ECONNABORTED" || err.message.includes("timeout")) {
-                console.warn(`⏱️  Timeout sur ${modelId}, retiré.`);
+            const status = err.response?.status;
+            const remove = shouldRemoveModel(err);
+
+            if (remove) {
+                console.warn(`❌ ${modelId} retiré (${err.code || status || err.message})`);
+                state.active_models = state.active_models.filter((m) => m.id !== modelId);
             } else {
-                console.error(`⚠️  Erreur sur ${modelId}: ${err.message}`);
+                // Erreur de clé ou rate-limit → passer au modèle suivant sans retirer
+                console.warn(`⚠️  ${modelId} → ${status || err.message} (modèle conservé)`);
             }
-            // Dans tous les cas, on retire le modèle et on continue avec le suivant
-            state.active_models = state.active_models.filter((m) => m.id !== modelId);
+
+            // Si c'est une erreur de clé globale (401) et mode auto, on log et on sort
+            if (status === 401) {
+                console.warn("🔑 Erreur 401 — vérifiez votre clé API OpenRouter.");
+            }
         }
     }
 
