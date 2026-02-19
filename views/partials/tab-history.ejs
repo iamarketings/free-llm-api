@@ -1,0 +1,44 @@
+            <div id="tab-history" class="tab-pane p-4 sm:p-6 lg:p-8 gap-6">
+                <div class="max-w-3xl w-full mx-auto">
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                            <div>
+                                <h3 class="font-semibold text-gray-900">Historique des Requêtes</h3>
+                                <p class="text-xs text-gray-400 mt-0.5">
+                                    <%= history.length %> requête(s) enregistrée(s)
+                                </p>
+                            </div>
+                        </div>
+                        <% if (history.length===0) { %>
+                            <div class="px-6 py-16 text-center">
+                                <i class="fas fa-inbox text-3xl text-gray-200 block mb-3"></i>
+                                <p class="text-sm text-gray-400">Aucune requête enregistrée pour l'instant.</p>
+                            </div>
+                            <% } else { %>
+                                <div class="divide-y divide-gray-100 max-h-[600px] overflow-y-auto custom-scroll">
+                                    <% history.forEach(function(item) { %>
+                                        <div class="px-6 py-4 hover:bg-gray-50 transition-colors">
+                                            <div class="flex items-center justify-between mb-1">
+                                                <span class="font-mono text-xs text-gray-400">
+                                                    <%= item.time %>
+                                                </span>
+                                                <span class="text-[11px] font-bold px-2 py-0.5 rounded-full border
+                                    <%= item.status === 'OK'
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                        : 'bg-rose-50 text-rose-700 border-rose-200' %>">
+                                                    <%= item.status %>
+                                                </span>
+                                            </div>
+                                            <p class="text-sm text-gray-700 truncate">"<%= item.prompt %>"</p>
+                                            <% if (item.model) { %>
+                                                <p class="text-xs text-gray-400 font-mono mt-0.5 truncate">
+                                                    <%= item.model %>
+                                                </p>
+                                                <% } %>
+                                        </div>
+                                        <% }); %>
+                                </div>
+                                <% } %>
+                    </div>
+                </div>
+            </div>

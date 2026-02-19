@@ -1,0 +1,274 @@
+            <div id="tab-settings" class="tab-pane p-4 sm:p-6 lg:p-8 gap-6">
+                <div class="max-w-3xl w-full mx-auto space-y-6">
+
+                    <!-- Routing -->
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                            <h3 class="font-semibold text-gray-900">Routage & Sélection de Modèle</h3>
+                            <p class="text-xs text-gray-500 mt-0.5">Contrôle la façon dont les requêtes sont
+                                distribuées.</p>
+                        </div>
+                        <div class="p-6">
+                            <form action="/config" method="POST"
+                                class="flex flex-col sm:flex-row items-start sm:items-end gap-4">
+                                <div class="flex-1 w-full">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Mode de
+                                        fonctionnement</label>
+                                    <select name="mode"
+                                        class="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none bg-white">
+                                        <option value="auto" <%=mode==='auto' ?'selected':'' %>>⚡ Automatique — Fallback
+                                            + Load Balancing</option>
+                                        <option value="manual" <%=mode==='manual' ?'selected':'' %>>🔒 Manuel — Modèle
+                                            fixe unique</option>
+                                    </select>
+                                    <p class="text-xs text-gray-400 mt-1.5">En mode auto, si un modèle échoue, le
+                                        système bascule automatiquement sur le suivant.</p>
+                                </div>
+                                <button type="submit" name="action" value="mode"
+                                    class="shrink-0 h-10 px-5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition shadow-sm">
+                                    Appliquer
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Performance -->
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                            <h3 class="font-semibold text-gray-900">Performance & Résilience</h3>
+                            <p class="text-xs text-gray-500 mt-0.5">Seuils de tolérance aux pannes et fréquence de
+                                synchronisation.</p>
+                        </div>
+                        <div class="p-6">
+                            <form action="/config" method="POST">
+                                <input type="hidden" name="action" value="advanced_settings">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div>
+                                        <label
+                                            class="flex items-center justify-between text-sm font-medium text-gray-700 mb-2">
+                                            <span>Intervalle de Refresh</span>
+                                            <span
+                                                class="font-mono text-xs bg-brand-50 text-brand-700 border border-brand-100 px-2 py-0.5 rounded-full">
+                                                <span id="val-refresh">
+                                                    <%= config_overrides.refresh_interval || 15 %>
+                                                </span> min
+                                            </span>
+                                        </label>
+                                        <input type="range" name="refresh_interval" min="5" max="60" step="5"
+                                            value="<%= config_overrides.refresh_interval || 15 %>"
+                                            class="w-full h-2 mb-1"
+                                            oninput="document.getElementById('val-refresh').innerText=this.value">
+                                        <div class="flex justify-between text-[10px] text-gray-400 font-mono">
+                                            <span>5 min</span><span>30 min</span><span>60 min</span>
+                                        </div>
+                                        <p class="text-xs text-gray-400 mt-2">Fréquence de vérification de la
+                                            disponibilité des modèles.</p>
+                                    </div>
+
+                                    <div>
+                                        <label
+                                            class="flex items-center justify-between text-sm font-medium text-gray-700 mb-2">
+                                            <span>Timeout par Requête</span>
+                                            <span
+                                                class="font-mono text-xs bg-amber-50 text-amber-700 border border-amber-100 px-2 py-0.5 rounded-full">
+                                                <span id="val-timeout">
+                                                    <%= config_overrides.request_timeout || 10 %>
+                                                </span> s
+                                            </span>
+                                        </label>
+                                        <div class="relative">
+                                            <input type="number" name="request_timeout" min="5" max="120"
+                                                value="<%= config_overrides.request_timeout || 10 %>"
+                                                class="w-full h-10 px-3 pr-12 text-sm border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-brand-500 outline-none"
+                                                oninput="document.getElementById('val-timeout').innerText=this.value">
+                                            <span
+                                                class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">sec</span>
+                                        </div>
+                                        <p class="text-xs text-gray-400 mt-2">Durée maximum avant de marquer un modèle
+                                            comme "mort" et passer au suivant.</p>
+                                    </div>
+                                </div>
+                                <div class="flex justify-end mt-6">
+                                    <button type="submit"
+                                        class="h-10 px-5 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 hover:text-brand-600 hover:border-brand-300 transition shadow-sm">
+                                        Enregistrer les seuils
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- System Prompt -->
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                            <h3 class="font-semibold text-gray-900">Prompt Système Global</h3>
+                            <p class="text-xs text-gray-500 mt-0.5">Injecté avant chaque conversation, pour tous les
+                                modèles.</p>
+                        </div>
+                        <div class="p-6">
+                            <form action="/config" method="POST">
+                                <textarea name="system_prompt" rows="5"
+                                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-brand-500 outline-none font-mono text-gray-700 resize-none"
+                                    placeholder="Ex: Tu es un assistant expert en programmation. Réponds toujours en français..."><%= systemPrompt || '' %></textarea>
+                                <div class="flex justify-between items-center mt-3">
+                                    <p class="text-xs text-gray-400">Laisser vide pour désactiver.</p>
+                                    <button type="submit" name="action" value="system_prompt"
+                                        class="h-9 px-4 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 hover:border-gray-300 transition shadow-sm">
+                                        Enregistrer le prompt
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Recommendations -->
+                    <% if (recommendations && recommendations.length> 0) { %>
+                        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                                <h3 class="font-semibold text-gray-900">Recommandations IA</h3>
+                                <p class="text-xs text-gray-500 mt-0.5">Basées sur les derniers tests de performance.
+                                </p>
+                            </div>
+                            <div
+                                class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
+                                <% recommendations.forEach(function(rec) { %>
+                                    <div class="p-5 hover:bg-gray-50 transition-colors">
+                                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">
+                                            <% if(rec.type==='best_score' ) { %>⭐ Meilleur Score<% } %>
+                                                    <% if(rec.type==='fastest' ) { %>⚡ Plus Rapide<% } %>
+                                                            <% if(rec.type==='context' ) { %>📚 Grand Contexte<% } %>
+                                        </p>
+                                        <p class="text-sm font-semibold text-gray-900 truncate mb-1"
+                                            title="<%= rec.model %>">
+                                            <%= rec.model.split('/').pop() %>
+                                        </p>
+                                        <p class="text-xs text-gray-400 mb-4">Score: <span
+                                                class="font-mono font-semibold text-gray-600">
+                                                <%= rec.score %>
+                                            </span></p>
+                                        <form action="/config" method="POST">
+                                            <input type="hidden" name="mode" value="manual">
+                                            <input type="hidden" name="model_id" value="<%= rec.model %>">
+                                            <button type="submit"
+                                                class="w-full h-8 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:border-brand-300 hover:text-brand-700 hover:bg-brand-50 bg-white transition">
+                                                Utiliser ce modèle
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <% }); %>
+                            </div>
+                        </div>
+                        <% } %>
+                </div>
+
+                <!-- API Key -->
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                        <h3 class="font-semibold text-gray-900">Clé API OpenRouter</h3>
+                        <p class="text-xs text-gray-500 mt-0.5">
+                            Optionnelle — sans clé, seuls les modèles publics gratuits sont accessibles.
+                            <a href="https://openrouter.ai/keys" target="_blank"
+                                class="text-brand-600 hover:underline ml-1">Obtenir une clé →</a>
+                        </p>
+                    </div>
+                    <div class="p-6">
+                        <form action="/config" method="POST">
+                            <input type="hidden" name="action" value="api_key">
+                            <div class="relative">
+                                <input type="password" name="api_key" id="api-key-input" value="<%= api_key %>"
+                                    placeholder="sk-or-v1-... (laisser vide pour accès public)"
+                                    class="w-full h-10 px-3 pr-20 text-sm font-mono border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                                <button type="button" onclick="toggleApiKey()"
+                                    class="absolute right-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 text-xs px-1"
+                                    title="Afficher/Masquer">
+                                    <i class="fas fa-eye" id="api-eye-icon"></i>
+                                </button>
+                                <% if (api_key) { %>
+                                    <span class="absolute right-3 top-1/2 -translate-y-1/2">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500 block"
+                                            title="Clé configurée"></span>
+                                    </span>
+                                    <% } %>
+                            </div>
+                            <div class="flex justify-between items-center mt-3">
+                                <p class="text-xs text-gray-400">
+                                    <% if (api_key) { %>
+                                        <i class="fas fa-circle-check text-emerald-500 mr-1"></i>Clé configurée
+                                        <% } else { %>
+                                            <i class="fas fa-circle-info text-amber-500 mr-1"></i>Mode public gratuit
+                                            actif
+                                            <% } %>
+                                </p>
+                                <button type="submit"
+                                    class="h-9 px-4 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition shadow-sm">
+                                    Enregistrer la clé
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Dashboard Security -->
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
+                        <i class="fas fa-lock text-gray-400 text-sm"></i>
+                        <div>
+                            <h3 class="font-semibold text-gray-900">Sécurité du Dashboard</h3>
+                            <p class="text-xs text-gray-500 mt-0.5">Protégez l'interface par un mot de passe. Par défaut
+                                : accès libre.</p>
+                        </div>
+                        <% if (dashboard_password) { %>
+                            <span
+                                class="ml-auto shrink-0 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                <i class="fas fa-lock text-xs mr-1"></i>Protégé
+                            </span>
+                            <% } else { %>
+                                <span
+                                    class="ml-auto shrink-0 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <i class="fas fa-lock-open text-xs mr-1"></i>Ouvert
+                                </span>
+                                <% } %>
+                    </div>
+                    <div class="p-6">
+                        <form action="/config" method="POST" class="space-y-4">
+                            <input type="hidden" name="action" value="dashboard_password">
+                            <% if (dashboard_password) { %>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Mot de passe
+                                        actuel</label>
+                                    <input type="password" name="current_password" required
+                                        placeholder="Entrez le mot de passe actuel pour modifier..."
+                                        class="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                                </div>
+                                <% } %>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                            Nouveau mot de passe
+                                            <span class="text-gray-400 font-normal">(laisser vide = supprimer la
+                                                protection)</span>
+                                        </label>
+                                        <div class="relative">
+                                            <input type="password" name="dashboard_password" id="pwd-input"
+                                                placeholder="Ex: MonMotDePasse123"
+                                                class="w-full h-10 px-3 pr-10 text-sm border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                                            <button type="button" onclick="togglePwd()"
+                                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 text-xs">
+                                                <i class="fas fa-eye" id="pwd-eye-icon"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center pt-1">
+                                        <p class="text-xs text-gray-400">
+                                            <i class="fas fa-triangle-exclamation text-amber-400 mr-1"></i>
+                                            N'affecte pas l'API (<code class="font-mono">/v1/*</code>) — toujours
+                                            publique.
+                                        </p>
+                                        <button type="submit"
+                                            class="h-9 px-4 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 hover:border-gray-300 transition shadow-sm">
+                                            Mettre à jour
+                                        </button>
+                                    </div>
+                        </form>
+                    </div>
+                </div>
+            </div>

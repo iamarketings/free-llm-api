@@ -1,0 +1,74 @@
+    <aside id="sidebar"
+        class="w-64 min-h-screen bg-surface flex flex-col border-r border-border z-30 flex-shrink-0
+    fixed lg:relative top-0 left-0 h-full lg:translate-x-0 -translate-x-full transition-transform lg:transition-[width]">
+
+        <!-- Logo -->
+        <div class="h-16 flex items-center px-4 border-b border-border flex-shrink-0 gap-3">
+            <div
+                class="sidebar-logo-icon h-9 w-9 shrink-0 bg-brand-600 rounded-lg flex items-center justify-center shadow-lg shadow-brand-600/30">
+                <i class="fas fa-layer-group text-white text-sm"></i>
+            </div>
+            <div class="sidebar-logo-text min-w-0">
+                <p class="text-white font-bold text-sm truncate">Dynamic Free Proxy</p>
+                <p class="text-muted text-[10px] font-mono">v2.4 Enterprise</p>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 py-4 px-3 space-y-1 overflow-y-auto custom-scroll">
+            <p class="nav-group-title px-3 text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-1">
+                Principal</p>
+
+            <button id="nav-dashboard" onclick="switchTab('dashboard')"
+                class="nav-btn active w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-gray-200"
+                title="Dashboard">
+                <i class="fas fa-chart-pie w-5 text-center text-base shrink-0"></i>
+                <span class="sidebar-label">Vue d'ensemble</span>
+            </button>
+
+            <button id="nav-settings" onclick="switchTab('settings')"
+                class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-muted"
+                title="Configuration">
+                <i class="fas fa-sliders-h w-5 text-center text-base shrink-0"></i>
+                <span class="sidebar-label">Configuration</span>
+            </button>
+
+            <button id="nav-docs" onclick="switchTab('docs')"
+                class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-muted"
+                title="API & Docs">
+                <i class="fas fa-book-open w-5 text-center text-base shrink-0"></i>
+                <span class="sidebar-label">API & Docs</span>
+            </button>
+
+            <div class="pt-4 mt-3 border-t border-border">
+                <p class="nav-group-title px-3 text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-1">
+                    Monitoring</p>
+                <button id="nav-logs" onclick="switchTab('logs')"
+                    class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-muted"
+                    title="Logs Système">
+                    <i class="fas fa-terminal w-5 text-center text-base shrink-0"></i>
+                    <span class="sidebar-label">Logs Système</span>
+                </button>
+                <button id="nav-history" onclick="switchTab('history')"
+                    class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-muted"
+                    title="Historique">
+                    <i class="fas fa-history w-5 text-center text-base shrink-0"></i>
+                    <span class="sidebar-label">Historique</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Footer -->
+        <div class="sidebar-footer p-4 border-t border-border flex items-center gap-3 bg-panel/50">
+            <div class="shrink-0 relative">
+                <span class="block w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-green"></span>
+            </div>
+            <div class="sidebar-footer-text min-w-0">
+                <p class="text-xs text-white font-medium truncate">
+                    <%= models.length %> modèles actifs
+                </p>
+                <p class="text-[10px] text-muted truncate">Mode: <%= mode==='auto' ? 'Automatique' : 'Manuel' %>
+                </p>
+            </div>
+        </div>
+    </aside>

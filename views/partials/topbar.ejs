@@ -1,0 +1,47 @@
+        <header
+            class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 gap-4 flex-shrink-0 z-10">
+            <div class="flex items-center gap-3 min-w-0">
+                <!-- Hamburger / collapse toggle -->
+                <button onclick="toggleSidebar()" title="Menu"
+                    class="h-9 w-9 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+                    <i class="fas fa-bars text-base"></i>
+                </button>
+                <!-- Breadcrumb -->
+                <div class="hidden sm:flex items-center gap-2 text-sm text-gray-500">
+                    <span class="text-gray-300">/</span>
+                    <span id="breadcrumb" class="font-medium text-gray-800">Vue d'ensemble</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Sync status -->
+                <% if (last_sync) { %>
+                    <span class="hidden md:flex items-center gap-1.5 text-xs text-gray-400">
+                        <i class="far fa-clock text-gray-300"></i>
+                        Sync: <span class="font-mono text-gray-500">
+                            <%= last_sync %>
+                        </span>
+                    </span>
+                    <% } %>
+
+                        <!-- Mode badge -->
+                        <span
+                            class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border
+                <%= mode==='auto' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-amber-50 border-amber-200 text-amber-700' %>">
+                            <span
+                                class="w-1.5 h-1.5 rounded-full <%= mode==='auto' ? 'bg-emerald-500' : 'bg-amber-500' %>"></span>
+                            <%= mode==='auto' ? 'Auto' : 'Manuel' %>
+                        </span>
+
+                        <!-- Refresh -->
+                        <form action="/refresh" method="POST">
+                            <button type="submit" <%=syncing ? 'disabled' : '' %>
+                                class="h-9 px-3 sm:px-4 rounded-lg bg-white border border-gray-200 text-gray-600
+                                hover:bg-gray-50 hover:text-brand-600 text-sm font-medium flex items-center gap-2
+                                transition shadow-sm disabled:opacity-50">
+                                <i class="fas fa-sync-alt text-sm <%= syncing ? 'fa-spin' : '' %>"></i>
+                                <span class="hidden sm:inline">Refresh</span>
+                            </button>
+                        </form>
+            </div>
+        </header>

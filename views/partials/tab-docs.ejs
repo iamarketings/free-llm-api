@@ -1,0 +1,147 @@
+            <div id="tab-docs" class="tab-pane p-4 sm:p-6 lg:p-8 gap-6">
+                <div class="max-w-3xl w-full mx-auto space-y-6">
+
+                    <!-- Intro -->
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                        <div class="flex items-start gap-4">
+                            <div class="h-10 w-10 rounded-xl bg-brand-50 flex items-center justify-center shrink-0">
+                                <i class="fas fa-plug text-brand-600"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-bold text-gray-900">Documentation de l'API</h2>
+                                <p class="text-sm text-gray-500 mt-1">Ce proxy est 100% compatible avec le format
+                                    OpenAI. Utilisez simplement une URL différente — votre code existant fonctionne sans
+                                    modification.</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-5 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Point d'entrée
+                            </p>
+                            <div class="flex items-center gap-3">
+                                <code
+                                    class="flex-1 font-mono text-sm text-brand-700 bg-white px-3 py-2 rounded border border-brand-100">http://localhost:8000/v1</code>
+                                <button onclick="copyText('http://localhost:8000/v1', this)"
+                                    class="shrink-0 h-9 w-9 rounded-lg border border-gray-200 bg-white text-gray-400 hover:text-brand-600 hover:border-brand-200 transition flex items-center justify-center">
+                                    <i class="far fa-copy text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Endpoints -->
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                            <h3 class="font-semibold text-gray-900">Endpoints Disponibles</h3>
+                        </div>
+                        <div class="divide-y divide-gray-100">
+                            <div class="px-6 py-4 flex flex-wrap items-start gap-4">
+                                <div class="flex items-center gap-3 min-w-[200px]">
+                                    <span
+                                        class="px-2 py-0.5 rounded font-mono text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">POST</span>
+                                    <code class="text-sm font-mono text-gray-800">/v1/chat/completions</code>
+                                </div>
+                                <p class="text-sm text-gray-500 flex-1">Envoyer un message et recevoir une réponse LLM.
+                                </p>
+                            </div>
+                            <div class="px-6 py-4 flex flex-wrap items-start gap-4">
+                                <div class="flex items-center gap-3 min-w-[200px]">
+                                    <span
+                                        class="px-2 py-0.5 rounded font-mono text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">GET</span>
+                                    <code class="text-sm font-mono text-gray-800">/v1/models</code>
+                                </div>
+                                <p class="text-sm text-gray-500 flex-1">Liste des modèles actifs au format OpenAI.</p>
+                            </div>
+                            <div class="px-6 py-4 flex flex-wrap items-start gap-4">
+                                <div class="flex items-center gap-3 min-w-[200px]">
+                                    <span
+                                        class="px-2 py-0.5 rounded font-mono text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">GET</span>
+                                    <code class="text-sm font-mono text-gray-800">/health</code>
+                                </div>
+                                <p class="text-sm text-gray-500 flex-1">Statut du service et métriques système.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- cURL -->
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                            <h3 class="font-semibold text-gray-900">Exemple — cURL</h3>
+                            <button onclick="copyBlock('curl-block', this)"
+                                class="h-8 px-3 rounded-lg border border-gray-200 text-xs font-medium text-gray-500 hover:text-brand-600 hover:border-brand-200 bg-white transition flex items-center gap-1.5">
+                                <i class="far fa-copy text-xs"></i> Copier
+                            </button>
+                        </div>
+                        <div class="p-6">
+                            <pre id="curl-block" class="code-block">curl -s http://localhost:8000/v1/chat/completions \
+  -H <span class="token-green">"Content-Type: application/json"</span> \
+  -H <span class="token-green">"Authorization: Bearer any-key"</span> \
+  -d <span class="token-green">'{
+    "model": "auto",
+    "messages": [
+      { "role": "system",  "content": "Tu es un assistant expert." },
+      { "role": "user",    "content": "Explique les réseaux de neurones." }
+    ],
+    "temperature": 0.7,
+    "max_tokens": 1024
+  }'</span></pre>
+                        </div>
+                    </div>
+
+                    <!-- Python -->
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                            <h3 class="font-semibold text-gray-900">Exemple — Python (openai SDK)</h3>
+                            <button onclick="copyBlock('python-block', this)"
+                                class="h-8 px-3 rounded-lg border border-gray-200 text-xs font-medium text-gray-500 hover:text-brand-600 hover:border-brand-200 bg-white transition flex items-center gap-1.5">
+                                <i class="far fa-copy text-xs"></i> Copier
+                            </button>
+                        </div>
+                        <div class="p-6">
+                            <pre id="python-block" class="code-block"><span class="token-purple">from</span> openai <span class="token-purple">import</span> OpenAI
+
+client = OpenAI(
+    base_url=<span class="token-green">"http://localhost:8000/v1"</span>,
+    api_key=<span class="token-green">"local"</span>  <span class="token-gray"># ignoré par le proxy</span>
+)
+
+<span class="token-gray"># Utilise le meilleur modèle disponible</span>
+response = client.chat.completions.create(
+    model=<span class="token-green">"auto"</span>,
+    messages=[{<span class="token-green">"role"</span>: <span class="token-green">"user"</span>, <span class="token-green">"content"</span>: <span class="token-green">"Bonjour !"</span>}],
+    temperature=<span class="token-blue">0.7</span>,
+    max_tokens=<span class="token-blue">512</span>
+)
+
+print(response.choices[<span class="token-blue">0</span>].message.content)</pre>
+                        </div>
+                    </div>
+
+                    <!-- Node.js -->
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                            <h3 class="font-semibold text-gray-900">Exemple — Node.js / Fetch</h3>
+                            <button onclick="copyBlock('node-block', this)"
+                                class="h-8 px-3 rounded-lg border border-gray-200 text-xs font-medium text-gray-500 hover:text-brand-600 hover:border-brand-200 bg-white transition flex items-center gap-1.5">
+                                <i class="far fa-copy text-xs"></i> Copier
+                            </button>
+                        </div>
+                        <div class="p-6">
+                            <pre id="node-block" class="code-block"><span class="token-purple">const</span> res = <span class="token-purple">await</span> fetch(<span class="token-green">"http://localhost:8000/v1/chat/completions"</span>, {
+  method: <span class="token-green">"POST"</span>,
+  headers: {
+    <span class="token-green">"Content-Type"</span>: <span class="token-green">"application/json"</span>,
+    <span class="token-green">"Authorization"</span>: <span class="token-green">"Bearer local"</span>
+  },
+  body: JSON.stringify({
+    model: <span class="token-green">"auto"</span>,
+    messages: [{ role: <span class="token-green">"user"</span>, content: <span class="token-green">"Hello!"</span> }]
+  })
+});
+
+<span class="token-purple">const</span> data = <span class="token-purple">await</span> res.json();
+console.log(data.choices[<span class="token-blue">0</span>].message.content);</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>

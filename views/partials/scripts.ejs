@@ -1,0 +1,150 @@
+<script>
+    // ---- Sidebar Toggle ----
+    let sidebarOpen = window.innerWidth >= 1024;
+    let sidebarCollapsed = false;
+
+    function toggleSidebar() {
+        const sb = document.getElementById('sidebar');
+        const ov = document.getElementById('sidebar-overlay');
+        if (window.innerWidth < 1024) {
+            // Mobile: slide in/out
+            sidebarOpen = !sidebarOpen;
+            sb.style.transform = sidebarOpen ? 'translateX(0)' : 'translateX(-100%)';
+            ov.classList.toggle('show', sidebarOpen);
+        } else {
+            // Desktop: collapse/expand
+            sidebarCollapsed = !sidebarCollapsed;
+            sb.classList.toggle('collapsed', sidebarCollapsed);
+        }
+    }
+
+    // Close sidebar on resize to mobile if open
+    window.addEventListener('resize', () => {
+        const sb = document.getElementById('sidebar');
+        if (window.innerWidth >= 1024) {
+            sb.style.transform = '';
+            document.getElementById('sidebar-overlay').classList.remove('show');
+            sidebarOpen = true;
+        } else {
+            if (!sidebarOpen) sb.style.transform = 'translateX(-100%)';
+        }
+    });
+    // Init
+    if (window.innerWidth < 1024) {
+        document.getElementById('sidebar').style.transform = 'translateX(-100%)';
+    }
+
+    // ---- Tab Switching ----
+    const tabMeta = {
+        dashboard: "Vue d'ensemble",
+        settings: "Configuration",
+        docs: "API & Documentation",
+        logs: "Logs Système",
+        history: "Historique des Requêtes"
+    };
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tabId).classList.add('active');
+        const navBtn = document.getElementById('nav-' + tabId);
+        if (navBtn) navBtn.classList.add('active');
+        document.getElementById('breadcrumb').textContent = tabMeta[tabId] || tabId;
+        localStorage.setItem('dfp_active_tab', tabId);
+
+        // Scroll logs to bottom
+        if (tabId === 'logs') {
+            setTimeout(() => {
+                const c = document.getElementById('log-container');
+                c.scrollTop = c.scrollHeight;
+            }, 100);
+        }
+    }
+
+    // Restore active tab
+    document.addEventListener('DOMContentLoaded', () => {
+        const lastTab = localStorage.getItem('dfp_active_tab') || 'dashboard';
+        switchTab(lastTab);
+    });
+
+    // ---- Logs Filter ----
+    function filterLogs(level) {
+        document.querySelectorAll('.log-filter-btn').forEach(b => {
+            b.classList.remove('bg-gray-700', 'text-gray-100');
+            b.classList.add('bg-transparent');
+        });
+        const btn = document.getElementById('log-filter-' + level);
+        btn.classList.add('bg-gray-700', 'text-gray-100');
+        btn.classList.remove('bg-transparent');
+
+        const entries = document.querySelectorAll('.log-entry');
+        entries.forEach(e => {
+            const show = level === 'all' || e.dataset.level === level;
+            e.style.display = show ? '' : 'none';
+        });
+    }
+
+    // ---- Utility: Copy to Clipboard ----
+    function copyText(text, btn) {
+        navigator.clipboard.writeText(text).then(() => {
+            const icon = btn.querySelector('i');
+            icon.className = 'fas fa-check text-emerald-500';
+            setTimeout(() => {
+                icon.className = 'far fa-copy';
+            }, 2000);
+        });
+    }
+
+    function copyBlock(id, btn) {
+        const text = document.getElementById(id).innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check text-emerald-500 text-xs"></i> Copié';
+            setTimeout(() => {
+                btn.innerHTML = originalHtml;
+            }, 2000);
+        });
+    }
+
+    // ---- Model Search ----
+    function filterModels(query) {
+        const rows = document.querySelectorAll('#model-table-body tr');
+        let count = 0;
+        const q = query.toLowerCase();
+        rows.forEach(r => {
+            const id = r.dataset.modelId || '';
+            if (id.toLowerCase().includes(q)) {
+                r.style.display = '';
+                count++;
+            } else {
+                r.style.display = 'none';
+            }
+        });
+        document.getElementById('model-count').innerText = count + " modèle(s) affiché(s)";
+    }
+
+    // ---- Password Visibility ----
+    function toggleApiKey() {
+        const input = document.getElementById('api-key-input');
+        const icon = document.getElementById('api-eye-icon');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('fa-eye-slash', 'fa-eye');
+        }
+    }
+
+    function togglePwd() {
+        const input = document.getElementById('pwd-input');
+        const icon = document.getElementById('pwd-eye-icon');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('fa-eye-slash', 'fa-eye');
+        }
+    }
+</script>

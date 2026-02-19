@@ -1,0 +1,56 @@
+            <div id="tab-logs" class="tab-pane p-4 sm:p-6 lg:p-8">
+
+                <div class="bg-surface rounded-xl border border-border shadow-lg flex flex-col"
+                    style="height: calc(100vh - 10rem)">
+                    <!-- Terminal Header -->
+                    <div
+                        class="px-5 py-3 border-b border-border flex items-center justify-between bg-panel/60 rounded-t-xl shrink-0">
+                        <div class="flex items-center gap-3">
+                            <div class="flex gap-1.5">
+                                <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+                                <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+                                <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                            </div>
+                            <span class="font-mono text-xs text-muted">system.log — <%= logs ? logs.length : 0 %>
+                                    entrée(s)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <!-- Filter Buttons -->
+                            <button onclick="filterLogs('all')" id="log-filter-all"
+                                class="h-6 px-2.5 rounded text-[11px] font-medium bg-gray-700 text-gray-100 border border-gray-600 hover:bg-gray-600 transition log-filter-btn active">Tout</button>
+                            <button onclick="filterLogs('info')" id="log-filter-info"
+                                class="h-6 px-2.5 rounded text-[11px] font-medium bg-transparent text-emerald-400 border border-gray-600 hover:bg-emerald-900/30 transition log-filter-btn">INFO</button>
+                            <button onclick="filterLogs('warn')" id="log-filter-warn"
+                                class="h-6 px-2.5 rounded text-[11px] font-medium bg-transparent text-amber-400 border border-gray-600 hover:bg-amber-900/30 transition log-filter-btn">WARN</button>
+                            <button onclick="filterLogs('error')" id="log-filter-error"
+                                class="h-6 px-2.5 rounded text-[11px] font-medium bg-transparent text-rose-400 border border-gray-600 hover:bg-rose-900/30 transition log-filter-btn">ERROR</button>
+                        </div>
+                    </div>
+                    <!-- Log Lines -->
+                    <div id="log-container"
+                        class="flex-1 overflow-y-auto custom-scroll p-4 font-mono text-xs leading-relaxed space-y-1">
+                        <% if (logs && logs.length> 0) { %>
+                            <% logs.forEach(function(log) { %>
+                                <div class="log-entry flex gap-3 group hover:bg-white/5 rounded px-1 py-0.5"
+                                    data-level="<%= log.level %>">
+                                    <span class="text-gray-500 shrink-0 select-none">
+                                        <%= log.time %>
+                                    </span>
+                                    <span
+                                        class="font-bold shrink-0 min-w-[52px] <%= log.level==='error'?'text-rose-400':log.level==='warn'?'text-amber-400':'text-emerald-400' %>">
+                                        [<%= log.level.toUpperCase() %>]
+                                    </span>
+                                    <span class="text-gray-300 break-all">
+                                        <%= log.message %>
+                                    </span>
+                                </div>
+                                <% }); %>
+                                    <% } else { %>
+                                        <div class="text-gray-600 italic text-center mt-16">
+                                            <i class="fas fa-terminal text-3xl block mb-3 text-gray-700"></i>
+                                            Aucun log système disponible.
+                                        </div>
+                                        <% } %>
+                    </div>
+                </div>
+            </div>
