@@ -1,0 +1,14 @@
+{
+    "_comment": "Copiez ce fichier en config.json. Il est créé automatiquement au premier démarrage.",
+    "mode": "auto",
+    "fixed_model": null,
+    "system_prompt": "",
+    "usage_stats": {
+        "success": 0,
+        "errors": 0
+    },
+    "config_overrides": {
+        "refresh_interval": 15,
+        "request_timeout": 10
+    }
+}
