@@ -14,9 +14,12 @@ const config = require("../config/index");
 const { state, saveConfig } = require("../state/appState");
 const fs = require("fs");
 const path = require("path");
+const logger = require("../utils/logger");
 
 // Chemin du fichier de mémoire/classification
 const MEMORY_PATH = path.join(__dirname, "..", "modelMemory.json");
+
+let refreshIntervalId = null;
 
 // Headers d'authentification communs — clé dynamique (UI > .env > vide)
 const authHeaders = () => {
@@ -28,14 +31,6 @@ const authHeaders = () => {
         "X-Title": "Free LLM API Proxy",
     };
 };
-
-/**
- * Charge la mémoire des modèles (scores, classifications, etc.)
- */
-const logger = require("../utils/logger");
-let refreshIntervalId = null;
-
-// ... imports ...
 
 /**
  * Charge la mémoire des modèles (scores, classifications, etc.)
@@ -229,36 +224,27 @@ async function fetchFreeModels() {
 }
 
 /**
- * ÉTAPE 2 — Nettoyage et test en arrière-plan
+ * Valide une liste de modèles (concurrence limitée, mise à jour mémoire)
+ * @param {Array} modelsToTest - Liste des modèles à tester
+ * @returns {Promise<Array>} - Liste des modèles validés
  */
-async function pruneDeadModels() {
-    if (state.is_syncing) {
-        logger.warn("🔄 Scan déjà en cours, annulé.");
-        return;
-    }
-    if (state.active_models.length === 0) return;
-
-    state.is_syncing = true;
-    const modelsToTest = [...state.active_models];
-    logger.info(`🔍 Test de ${modelsToTest.length} modèles en parallèle...`);
-
+async function validateModels(modelsToTest) {
+    logger.info(`🔍 Validation de ${modelsToTest.length} modèles...`);
     const memory = loadModelMemory();
+    const validModels = [];
+    const limit = 5; // Concurrence limitée à 5
 
-    try {
-        const results = await Promise.all(
-            modelsToTest.map(async (m) => {
+    // Traitement par lots pour limiter la concurrence
+    for (let i = 0; i < modelsToTest.length; i += limit) {
+        const chunk = modelsToTest.slice(i, i + limit);
+        const chunkResults = await Promise.all(
+            chunk.map(async (m) => {
                 const result = await testModel(m.id);
-                return { id: m.id, ...result };
+                return { model: m, result };
             })
         );
 
-        // Met à jour les modèles avec les résultats
-        const validModels = [];
-
-        for (let i = 0; i < modelsToTest.length; i++) {
-            const model = modelsToTest[i];
-            const result = results[i];
-
+        for (const { model, result } of chunkResults) {
             // Sauvegarde les métriques en mémoire
             if (!memory.scores[model.id]) {
                 memory.scores[model.id] = { tests: 0, totalScore: 0, totalLatency: 0 };
@@ -284,31 +270,47 @@ async function pruneDeadModels() {
                 });
             }
         }
+    }
 
-        const before = state.active_models.length;
-        state.active_models = validModels;
+    generateRecommendations(memory, validModels);
+    saveModelMemory(memory);
 
-        // Génère les recommandations
-        generateRecommendations(memory);
+    const removed = modelsToTest.length - validModels.length;
+    if (removed > 0) {
+        logger.warn(`🗑️  ${removed} modèle(s) KO retirés. ${validModels.length} restants.`);
+    } else {
+        logger.info(`✅ Tous les modèles (${validModels.length}) sont OK.`);
+    }
 
-        saveModelMemory(memory);
+    return validModels;
+}
+
+
+/**
+ * ÉTAPE 2 — Nettoyage et test en arrière-plan (Version Legacy/Manuelle)
+ * Utilise maintenant validateModels mais met à jour le state.
+ */
+async function pruneDeadModels() {
+    if (state.is_syncing) {
+        logger.warn("🔄 Scan déjà en cours, annulé.");
+        return;
+    }
+    if (state.active_models.length === 0) return;
+
+    state.is_syncing = true;
+    try {
+        const valid = await validateModels(state.active_models);
+        state.active_models = valid;
         state.last_sync = new Date().toLocaleTimeString("fr-FR");
-
-        const removed = before - state.active_models.length;
-        if (removed > 0) {
-            logger.warn(`🗑️  ${removed} modèle(s) KO retirés. ${state.active_models.length} restants.`);
-        } else {
-            logger.info(`✅ Tous les modèles (${state.active_models.length}) sont OK.`);
-        }
     } finally {
         state.is_syncing = false;
     }
 }
 
-// ... generateRecommendations (unchanged) ...
-function generateRecommendations(memory) {
+// ... generateRecommendations ...
+function generateRecommendations(memory, modelsOverride = null) {
     const recommendations = [];
-    const models = state.active_models;
+    const models = modelsOverride || state.active_models;
 
     // Recommandation pour le meilleur généraliste
     const bestGeneral = models
@@ -323,10 +325,6 @@ function generateRecommendations(memory) {
             score: bestGeneral.lastTest?.avgScore || 0,
         });
     }
-
-    // Autres recommandations copiées depuis l'original ou inchangées
-    // ... (Code existant inchangé pour la logique de recommandation, juste compacté ici pour lisibilité)
-    // NOTE: Pour éviter de couper le fichier, je réutilise la logique existante.
 
     const fastest = models
         .filter(m => m.lastTest?.latency)
@@ -389,14 +387,29 @@ function generateRecommendations(memory) {
 
 
 /**
- * Lance le cycle complet : fetch + prune
+ * Lance le cycle complet : fetch + validate + update
  */
 async function fullRefresh() {
-    const fresh = await fetchFreeModels();
-    if (fresh.length > 0) {
-        state.active_models = fresh;
+    if (state.is_syncing) {
+        logger.warn("🔄 Sync déjà en cours (fullRefresh), ignoré.");
+        return;
     }
-    pruneDeadModels().catch(err => logger.error(err.message));
+    state.is_syncing = true;
+    try {
+        const fresh = await fetchFreeModels();
+        if (fresh.length > 0) {
+            // On ne met à jour state.active_models qu'APRÈS validation
+            const valid = await validateModels(fresh);
+            state.active_models = valid;
+            state.last_sync = new Date().toLocaleTimeString("fr-FR");
+        } else {
+            logger.warn("⚠️ Aucun modèle trouvé lors du fetch.");
+        }
+    } catch (e) {
+        logger.error(`❌ Erreur fullRefresh: ${e.message}`);
+    } finally {
+        state.is_syncing = false;
+    }
 }
 
 /**
@@ -419,11 +432,7 @@ function restartAutoRefresh() {
  * Démarre la boucle de rafraîchissement au lancement
  */
 async function startAutoRefresh() {
-    const initial = await fetchFreeModels();
-    state.active_models = initial;
-
-    pruneDeadModels().catch(err => logger.error(err.message));
-
+    await fullRefresh(); // Utilise la nouvelle logique sécurisée
     restartAutoRefresh();
 }
 

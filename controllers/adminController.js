@@ -8,7 +8,7 @@
  *  - GET  /v1/models → liste des modèles au format OpenAI
  */
 const { state, saveConfig } = require("../state/appState");
-const { restartAutoRefresh } = require("../models/modelManager");
+const { restartAutoRefresh, fullRefresh } = require("../models/modelManager");
 const logger = require("../utils/logger");
 
 /**
@@ -97,8 +97,13 @@ function logoutDashboard(req, res) {
  */
 async function refreshModels(req, res) {
     if (state.is_syncing) {
-        return res.status(202).json({ message: "Sync déjà en cours, patientez." });
+        return res.redirect("/?error=syncing");
     }
+
+    // Lance le refresh (ne bloque pas la réponse pour éviter le timeout navigateur)
+    fullRefresh().catch(err => logger.error(`Erreur refresh manuel: ${err.message}`));
+
+    // Redirection immédiate, le dashboard affichera l'état "is_syncing"
     return res.redirect("/");
 }
 
