@@ -42,9 +42,10 @@ function injectSystemPrompt(messages) {
     if (!state.system_prompt || state.system_prompt.trim() === "") {
         return messages;
     }
+    // Si un prompt système est déjà présent dans les messages, on ne le double pas
     const hasSystem = messages.some(m => m.role === "system");
     if (hasSystem) {
-        return [{ role: "system", content: state.system_prompt }, ...messages];
+        return messages;
     }
     return [{ role: "system", content: state.system_prompt }, ...messages];
 }
